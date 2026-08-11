@@ -140,6 +140,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
     <button class="btn btn-primary" id="btn-novo" onclick="openNewEq()">+ Novo</button>
     <button class="btn" id="btn-dup" style="display:none" onclick="openDupModal()">⧉ Duplicar</button>
     <button class="btn" id="btn-refresh" style="display:none" onclick="forceUpdate()">↺ Atualizar</button>
+    <button class="btn btn-danger" id="btn-reset" style="display:none" onclick="openResetModal()">Resetar</button>
     <button class="btn btn-icon" id="btn-theme" onclick="toggleTheme()" title="Alternar tema">◐</button>
     <button class="btn" id="btn-edit" style="display:none" onclick="openEditEq()">✏ Editar</button>
     <button class="btn btn-danger" id="btn-del" style="display:none" onclick="deleteCurrentEq()">× Excluir</button>
@@ -155,7 +156,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v12</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v13</div>
     </div>
   </div>
 
@@ -241,6 +242,18 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
     <div class="modal-sub">Selecione qual equipamento deseja duplicar:</div>
     <div id="dup-list" style="max-height:280px;overflow-y:auto;margin-bottom:12px"></div>
     <button class="btn" style="width:100%;justify-content:center" onclick="closeDupModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL RESET -->
+<div class="modal-bg" id="modal-reset">
+  <div class="modal-box">
+    <div class="modal-title" style="color:var(--danger)">⚠ Resetar aplicativo</div>
+    <div class="modal-sub">Esta ação irá apagar <strong>todas as fotos, notas e equipamentos personalizados</strong>. O app voltará ao estado padrão com os equipamentos originais.<br><br>Esta ação <strong>não pode ser desfeita</strong>.</div>
+    <div class="modal-btns">
+      <button class="btn" style="flex:1;justify-content:center" onclick="closeResetModal()">Cancelar</button>
+      <button class="btn btn-danger" style="flex:1;justify-content:center" onclick="confirmReset()">Resetar tudo</button>
+    </div>
   </div>
 </div>
 
@@ -440,7 +453,8 @@ function updHeader(){
   document.getElementById('btn-back').style.display    = isHome  ? 'none'        : 'inline-flex';
   document.getElementById('btn-novo').style.display    = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-dup').style.display     = isHome  ? 'inline-flex' : 'none';
-  document.getElementById('btn-refresh').style.display = isHome  ? 'inline-flex' : 'none';
+  document.getElementById('btn-refresh').style.display = 'none';
+  document.getElementById('btn-reset').style.display   = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-edit').style.display    = isDetail? 'inline-flex' : 'none';
   document.getElementById('btn-del').style.display     = isDetail? 'inline-flex' : 'none';
   document.getElementById('btn-theme').style.display   = 'inline-flex';
@@ -890,9 +904,45 @@ function toast(msg, dur=2800){
   toastTimer = setTimeout(()=>el.classList.remove('show'), dur);
 }
 
-// ── ATUALIZAR APP ─────────────────────────────────────────────────────────────
+// ── RESET ─────────────────────────────────────────────────────────────────────
+function openResetModal(){
+  document.getElementById('modal-reset').classList.add('open');
+}
+function closeResetModal(){
+  document.getElementById('modal-reset').classList.remove('open');
+}
+async function confirmReset(){
+  closeResetModal();
+  showLoading('Resetando...');
+  try {
+    // Apaga todas as fotos e equipamentos do IndexedDB
+    const eqs = await dbGetAll('equipments');
+    for(const eq of eqs){
+      for(let i=0; i<(eq.parts||[]).length; i++){
+        await dbDelete('photos', photoKey(eq.id, i)).catch(()=>{});
+      }
+      await dbDelete('equipments', eq.id).catch(()=>{});
+    }
+    // Limpa localStorage
+    localStorage.removeItem('equipdoc_defaults_ver');
+    localStorage.removeItem(DB_KEY);
+    // Limpa cache do service worker
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+    if('serviceWorker' in navigator){
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+    hideLoading();
+    toast('✓ Resetado! Recarregando...');
+    setTimeout(() => location.reload(true), 1000);
+  } catch(e){
+    hideLoading();
+    location.reload(true);
+  }
+}
+
 async function forceUpdate(){
-  toast('↺ Atualizando...');
   try {
     const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
@@ -900,10 +950,9 @@ async function forceUpdate(){
       const regs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(regs.map(r => r.unregister()));
     }
+    toast('↺ Atualizando...');
     setTimeout(() => location.reload(true), 800);
-  } catch(e){
-    location.reload(true);
-  }
+  } catch(e){ location.reload(true); }
 }
 
 // ── TEMA ──────────────────────────────────────────────────────────────────────

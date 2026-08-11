@@ -393,21 +393,30 @@ async function loadEquipments(){
     }));
 
     // Se a versão dos padrões mudou, sincroniza equipamentos padrão
-    // preservando fotos e notas já tiradas
     if(savedVersion < DEFAULTS_VERSION){
       for(const def of DEFAULT_EQUIPMENTS){
         const existing = S.equipments.find(e => e.name === def.name);
         if(existing){
-          // Monta nova lista de partes preservando dados já salvos
+          // Atualiza partes de equipamento existente preservando fotos/notas
           const newParts = def.parts.map(pname => {
             const old = existing.parts.find(p => p.name === pname);
             return old ? old : {name:pname, note:'', hasPhoto:false};
           });
           existing.parts = newParts;
           await dbPut('equipments', {
-            id: existing.id,
-            name: existing.name,
+            id: existing.id, name: existing.name,
             parts: existing.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))
+          });
+        } else {
+          // Equipamento novo — adiciona à lista
+          const newEq = {
+            id: nextId(), name: def.name,
+            parts: def.parts.map(pname=>({name:pname, note:'', hasPhoto:false}))
+          };
+          S.equipments.push(newEq);
+          await dbPut('equipments', {
+            id: newEq.id, name: newEq.name,
+            parts: newEq.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))
           });
         }
       }

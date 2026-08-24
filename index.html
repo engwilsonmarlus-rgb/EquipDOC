@@ -156,7 +156,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v14</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v16</div>
     </div>
   </div>
 
@@ -453,7 +453,7 @@ function updHeader(){
   document.getElementById('btn-back').style.display    = isHome  ? 'none'        : 'inline-flex';
   document.getElementById('btn-novo').style.display    = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-dup').style.display     = isHome  ? 'inline-flex' : 'none';
-  document.getElementById('btn-refresh').style.display = 'none';
+  document.getElementById('btn-refresh').style.display = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-reset').style.display   = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-edit').style.display    = isDetail? 'inline-flex' : 'none';
   document.getElementById('btn-del').style.display     = isDetail? 'inline-flex' : 'none';
@@ -923,9 +923,8 @@ async function confirmReset(){
       }
       await dbDelete('equipments', eq.id).catch(()=>{});
     }
-    // Limpa localStorage
-    localStorage.removeItem('equipdoc_defaults_ver');
-    localStorage.removeItem(DB_KEY);
+    // Limpa TODO o localStorage do app
+    localStorage.clear();
     // Limpa cache do service worker
     const keys = await caches.keys();
     await Promise.all(keys.map(k => caches.delete(k)));
@@ -938,6 +937,7 @@ async function confirmReset(){
     setTimeout(() => location.reload(true), 1000);
   } catch(e){
     hideLoading();
+    localStorage.clear();
     location.reload(true);
   }
 }

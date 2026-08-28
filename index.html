@@ -156,7 +156,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v22</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v23</div>
     </div>
   </div>
 
@@ -571,7 +571,7 @@ async function saveEquipment(){
   if(!ok){ toast('⚠ Preencha todos os nomes'); return; }
   const eq = {id: nextId(), name, parts};
   S.equipments.push(eq);
-  await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))});
+  await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,group:p.group||'',note:p.note,hasPhoto:p.hasPhoto}))});
   toast('✓ Equipamento salvo');
   renderHome();
   go('home');
@@ -670,7 +670,7 @@ async function saveEditEquipment(){
   if(!ok){ toast('⚠ Preencha todos os nomes'); return; }
   eq.name = name;
   eq.parts = newParts;
-  await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))});
+  await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,group:p.group||'',note:p.note,hasPhoto:p.hasPhoto}))});
   toast('✓ Alterações salvas');
   renderHome(); renderDetail(); go('detail');
 }
@@ -822,7 +822,7 @@ async function deletePhoto(pi){
   await dbDelete('photos', photoKey(eq.id, pi));
   eq.parts[pi].hasPhoto = false;
   eq.parts[pi].note = '';
-  await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))});
+  await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,group:p.group||'',note:p.note,hasPhoto:p.hasPhoto}))});
   toast('Foto apagada');
   const scr = document.getElementById('screen-detail');
   const scrollY = scr.scrollTop;
@@ -842,11 +842,17 @@ async function deleteAllPhotos(){
     eq.parts[i].hasPhoto = false;
     eq.parts[i].note = '';
   }
-  await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))});
+  await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,group:p.group||'',note:p.note,hasPhoto:p.hasPhoto}))});
   hideLoading();
   toast('✓ Todas as fotos apagadas');
   renderHome();
-  await renderDetail();
+  if(S.currentGroup){
+    S.currentGroup = null;
+    renderGroups();
+    go('groups');
+  } else {
+    await renderDetail();
+  }
 }
 
 // ── CAPTURA INLINE (sem trocar de tela) ───────────────────────────────────────
@@ -894,7 +900,7 @@ async function savePhotoInline(){
     part.note     = document.getElementById('mf-note').value.trim();
     part.hasPhoto = true;
     await dbPut('photos', S.captureDataUrl, photoKey(eq.id, S.capturePart));
-    await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))});
+    await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,group:p.group||'',note:p.note,hasPhoto:p.hasPhoto}))});
     // Guardar scroll antes de re-renderizar
     const scr = document.getElementById('screen-detail');
     const scrollY = scr.scrollTop;

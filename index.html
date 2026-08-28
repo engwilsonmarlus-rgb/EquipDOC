@@ -156,7 +156,23 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v16</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v22</div>
+    </div>
+  </div>
+
+  <!-- GRUPOS (para equipamentos com subgrupos) -->
+  <div class="screen" id="screen-groups">
+    <div style="padding:20px">
+      <div class="dstats" id="groups-stats"></div>
+      <div class="gp">
+        <div class="gp-lbl"><span>Progresso geral</span><span id="groups-gp-pct">0%</span></div>
+        <div class="gp-bar"><div class="gp-fill" id="groups-gp-fill" style="width:0%"></div></div>
+      </div>
+      <div class="dactions">
+        <button class="btn" onclick="openZipModal()">↓ Exportar ZIP</button>
+        <button class="btn btn-danger" onclick="deleteAllPhotos()">× Apagar tudo</button>
+      </div>
+      <div id="groups-list"></div>
     </div>
   </div>
 
@@ -275,9 +291,9 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
     <div class="modal-title">↓ Exportar ZIP</div>
     <div class="modal-sub">Preencha os campos para nomear o arquivo ZIP.</div>
     <label class="flbl">Código do equipamento</label>
-    <input class="finp" type="text" id="zip-code-inp" placeholder="Ex: CS 39T1" style="margin-bottom:12px">
+    <input class="finp" type="text" id="zip-code-inp" placeholder="Ex: 39T1" style="margin-bottom:12px">
     <label class="flbl">Subestação</label>
-    <input class="finp" type="text" id="zip-sub-inp" placeholder="Ex: SE ALTOS">
+    <input class="finp" type="text" id="zip-sub-inp" placeholder="Ex: SE TERESINA">
     <div class="modal-btns">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeZipModal()">Cancelar</button>
       <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmExportZip()">↓ Baixar</button>
@@ -299,12 +315,30 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
 <script>
 // ── DADOS DEFAULT (do Excel) ──────────────────────────────────────────────────
 const DEFAULT_EQUIPMENTS = [
-  { name: 'CHAVE MONO/TADEM/FUSÍVEL', parts: ['PLACA A','PLACA B','PLACA C','PANO','PLACA COD','AT A','AT B','AT C','MI A1','MI A2','MI A3','MI B1','MI B2','MI B3','MI C1','MI C2','MI C3','FICHA'] },
+  { name: 'CHAVE MONO/TANDEM/FUSÍVEL', parts: ['PLACA A','PLACA B','PLACA C','PANO','PLACA COD','AT A','AT B','AT C','MI A1','MI A2','MI A3','MI B1','MI B2','MI B3','MI C1','MI C2','MI C3','FICHA'] },
   { name: 'DISJUNTOR', parts: ['AT','CABLAGEM 1','CABLAGEM 2','DIAGRAMA','FICHA','MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','PANO','PLACA COD','PLACA','PNL AB','PNL ED','PNL VD','FASE A(A)','FASE A','FASE B(A)','FASE B','FASE C(A)','FASE C','FECHAMENTO 1','FECHAMENTO 2','ABERTURA 1','ABERTURA 2'] },
   { name: 'TRANSFORMADOR DE CORRENTE', parts: ['AT','AT A','AT B','AT C','FICHA','MI A','MI A2','MI B','MI B2','MI C','MI C2','PANO','PLACA','PLACA A','PLACA B','PLACA C','NO A','NO B','NO C','PLACA COD','PNL AB','PNL AT','PNL ED','PNL VD','PNL','SEC A','SEC B','SEC C','SUSPIRO 1','SUSPIRO 2'] },
   { name: 'PARA-RAIO', parts: ['AT A','AT B','AT C','FASE A','FASE B','FASE C','FICHA','MI A','MI B','MI C','PANO','PLACA A','PLACA B','PLACA C','PLACA COD'] },
   { name: 'TRANSFORMADOR DE POTÊNCIA', parts: ['AT A','AT B','AT C','FICHA','MI A','MI B','MI C','NO A','NO B','NO C','PANO','PLACA A','PLACA B','PLACA C','PLACA COD','PNL AB','PNL AT','PNL ED','PNL VD','PNL','SEC A','SEC B','SEC C','SUSPIRO 1','SUSPIRO 2'] },
-  { name: 'CHAVE TRIPOLAR', parts: ['PANO AB','PANO FE','PLACA','PLACA COD','PNL AT','PNL','MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','AT A','AT B','AT C','FICHA'] }
+  { name: 'CHAVE TRIPOLAR', parts: ['PANO AB','PANO FE','PLACA','PLACA COD','PNL AT','PNL','MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','AT A','AT B','AT C','FICHA'] },
+  { name: 'TRANSFORMADOR/REGULADOR', groups: [
+    { name: 'BUCHAS', parts: ['MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','NO L1','NO L2','NO L3','NO S1','NO S2','NO S3','PANO L','PANO S','PLACA L1','PLACA L2','PLACA L3','PLACA S1','PLACA S2','PLACA S3'] },
+    { name: 'CAIXAS DE PASSAGEM DOS TC DE BUCHA', parts: ['CP L1 AB','CP L1 PLACA','CP L1','CP L2 AB','CP L2 PLACA','CP L2','CP L3 AB','CP L3 PLACA','CP L3','CP S1 AB','CP S1 PLACA','CP S1','CP S2 AB','CP S2 PLACA','CP S2','CP S3 AB','CP S3 PLACA','CP S3','CP SOLO AB','CP SOLO PLACA','CP SOLO'] },
+    { name: 'DESUMIDIFICADOR DE AR', parts: ['DESUMIDIFICADOR DE AR 1','DESUMIDIFICADOR DE AR 2','PANO','PLACA 1','PLACA 2'] },
+    { name: 'DISPOSITIVO COLETOR DE GAS', parts: ['DISPOSITIVO COLETOR DE GAS'] },
+    { name: 'FILTRO DE ÓLEO', parts: ['ELETRODUTO','MANÔMETRO','PBN VD','PLACA','PNL AB','PNL COMPLETO','PNL','VALVULA SUPERIOR','VALVURA INFERIOR'] },
+    { name: 'HYDROCAL', parts: ['CONEXÕES 01','CONEXÕES 02','PNL','VALVULAS'] },
+    { name: 'INDICADOR DE ÓLEO', parts: ['CP AB','CP PLACA','CP','INDICADOR DIREITO','INDICADOR ESQUERDO','PANO'] },
+    { name: 'NÚCLEO ARMADURA', parts: ['CP L AB','CP L MEGA 1-2','CP L MEGA 1-M','CP L MEGA 2-M','CP L PLACA INT','CP L PLACA','CP L','CP S AB','CP S MEGA 1-2','CP S MEGA 1-M','CP S MEGA 2-M','CP S PLACA INT','CP S PLACA','CP S'] },
+    { name: 'PNL PRINCIPAL', parts: ['PLACA INT 1','PLACA INT 2','PLACA','PNL AB 1','PNL AB 2','PNL ED','PNL VD','PORT'] },
+    { name: 'PR', parts: ['AT 1','AT 2','COMPLETO','FASE A','FASE B','FASE C','ISOLADOR A','ISOLADOR B','ISOLADOR C','MANIVELA','NO','PANO','PR A','PR B','PR C','SUPERIOR'] },
+    { name: 'REGULADOR', parts: ['AT 1','AT 2','ESCADA','PANO 1','PANO 2','PANO 3','PANO 4','PANO 5','PANO 6','PLACA COD','TANQUE DE EXPANSÃO'] },
+    { name: 'RELE DE BUCHHOLZ', parts: ['COMPLETO','NO','PANO','SUPERIOR'] },
+    { name: 'SENSOR DE TEMPERATURA AMBIENTE', parts: ['FOTO 1','PANO','PLACA'] },
+    { name: 'TAP', parts: ['MANIVELA','PLACA','PNL AB','PNL ED','PNL VD','PNL','TAP'] },
+    { name: 'VÁLVULA DE ALÍVIO DE PRESSÃO', parts: ['LADO 1','LADO 2','PLACA'] },
+    { name: 'VENTILADORES', parts: ['V1-1','V1-2','V1-3','V2-1','V2-2','V2-3','V3-1','V3-2','V3-3','V4-1','V4-2','V4-3'] }
+  ]}
 ];
 
 // ── IndexedDB ─────────────────────────────────────────────────────────────────
@@ -365,8 +399,9 @@ function photoKey(eqId, partIdx){ return `${eqId}_${partIdx}`; }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let S = {
-  equipments: [],   // [{id, name, parts:[{name, note, hasPhoto}]}]
+  equipments: [],
   currentEq:  null,
+  currentGroup: null, // nome do grupo atual (para equipamentos agrupados)
   capturePart: null,
   captureDataUrl: null,
   screen: 'home'
@@ -377,59 +412,65 @@ function nextId(){ return Date.now() + Math.random().toString(36).slice(2); }
 // ── PERSIST ───────────────────────────────────────────────────────────────────
 async function persistEquipments(){
   for(const eq of S.equipments){
-    // save without photo data (photos are in their own store)
-    await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name, note:p.note||'', hasPhoto:p.hasPhoto||false}))});
+    await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name, group:p.group||'', note:p.note||'', hasPhoto:p.hasPhoto||false}))});
   }
 }
 
 // versão da lista padrão — incremente sempre que mudar DEFAULT_EQUIPMENTS
-const DEFAULTS_VERSION = 7;
+const DEFAULTS_VERSION = 11;
+
+// Converte definição padrão em objeto de equipamento
+function defToEq(d){
+  const id = nextId();
+  if(d.groups){
+    // Equipamento com grupos: achata em parts com campo group
+    const parts = [];
+    d.groups.forEach(g => {
+      g.parts.forEach(pname => {
+        parts.push({name:pname, group:g.name, note:'', hasPhoto:false});
+      });
+    });
+    return {id, name:d.name, parts};
+  } else {
+    return {id, name:d.name, parts: d.parts.map(pname=>({name:pname, note:'', hasPhoto:false}))};
+  }
+}
 
 async function loadEquipments(){
   const rows = await dbGetAll('equipments');
   const savedVersion = parseInt(localStorage.getItem('equipdoc_defaults_ver')||'0');
 
   if(rows.length === 0){
-    // Primeira execução: carrega padrões
-    S.equipments = DEFAULT_EQUIPMENTS.map(d=>({
-      id: nextId(),
-      name: d.name,
-      parts: d.parts.map(pname=>({name:pname, note:'', hasPhoto:false}))
-    }));
+    S.equipments = DEFAULT_EQUIPMENTS.map(defToEq);
     await persistEquipments();
     localStorage.setItem('equipdoc_defaults_ver', DEFAULTS_VERSION);
   } else {
     S.equipments = rows.map(r=>({
       id: r.id,
       name: r.name,
-      parts: (r.parts||[]).map(p=>({name:p.name, note:p.note||'', hasPhoto:p.hasPhoto||false}))
+      parts: (r.parts||[]).map(p=>({name:p.name, group:p.group||'', note:p.note||'', hasPhoto:p.hasPhoto||false}))
     }));
 
-    // Se a versão dos padrões mudou, sincroniza equipamentos padrão
     if(savedVersion < DEFAULTS_VERSION){
       for(const def of DEFAULT_EQUIPMENTS){
         const existing = S.equipments.find(e => e.name === def.name);
+        const newFlat = defToEq(def).parts;
         if(existing){
-          // Atualiza partes de equipamento existente preservando fotos/notas
-          const newParts = def.parts.map(pname => {
-            const old = existing.parts.find(p => p.name === pname);
-            return old ? old : {name:pname, note:'', hasPhoto:false};
+          const newParts = newFlat.map(np => {
+            const old = existing.parts.find(p => p.name === np.name && (p.group||'') === (np.group||''));
+            return old ? {...old, group: np.group||''} : np;
           });
           existing.parts = newParts;
           await dbPut('equipments', {
             id: existing.id, name: existing.name,
-            parts: existing.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))
+            parts: existing.parts.map(p=>({name:p.name, group:p.group||'', note:p.note, hasPhoto:p.hasPhoto}))
           });
         } else {
-          // Equipamento novo — adiciona à lista
-          const newEq = {
-            id: nextId(), name: def.name,
-            parts: def.parts.map(pname=>({name:pname, note:'', hasPhoto:false}))
-          };
+          const newEq = defToEq(def);
           S.equipments.push(newEq);
           await dbPut('equipments', {
             id: newEq.id, name: newEq.name,
-            parts: newEq.parts.map(p=>({name:p.name,note:p.note,hasPhoto:p.hasPhoto}))
+            parts: newEq.parts.map(p=>({name:p.name, group:p.group||'', note:p.note, hasPhoto:p.hasPhoto}))
           });
         }
       }
@@ -450,19 +491,30 @@ function go(id){
 function updHeader(){
   const isHome   = S.screen==='home';
   const isDetail = S.screen==='detail';
+  const isGroups = S.screen==='groups';
   document.getElementById('btn-back').style.display    = isHome  ? 'none'        : 'inline-flex';
   document.getElementById('btn-novo').style.display    = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-dup').style.display     = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-refresh').style.display = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-reset').style.display   = isHome  ? 'inline-flex' : 'none';
-  document.getElementById('btn-edit').style.display    = isDetail? 'inline-flex' : 'none';
-  document.getElementById('btn-del').style.display     = isDetail? 'inline-flex' : 'none';
+  document.getElementById('btn-edit').style.display    = isDetail && !S.currentGroup ? 'inline-flex' : 'none';
+  document.getElementById('btn-del').style.display     = (isDetail && !S.currentGroup) || isGroups ? 'inline-flex' : 'none';
   document.getElementById('btn-theme').style.display   = 'inline-flex';
 }
 
 function goBack(){
   if(S.screen==='new-eq')    go('home');
-  else if(S.screen==='detail') go('home');
+  else if(S.screen==='groups'){ go('home'); }
+  else if(S.screen==='detail'){
+    if(S.currentGroup){
+      // Voltando de um grupo → vai para tela de grupos
+      S.currentGroup = null;
+      renderGroups();
+      go('groups');
+    } else {
+      go('home');
+    }
+  }
   else if(S.screen==='edit-eq'){ go('detail'); renderDetail(); }
 }
 
@@ -626,6 +678,58 @@ async function saveEditEquipment(){
 // ── DETALHE ───────────────────────────────────────────────────────────────────
 function openEq(idx){
   S.currentEq = idx;
+  S.currentGroup = null;
+  const eq = S.equipments[idx];
+  const hasGroups = eq.parts.some(p => p.group);
+  if(hasGroups){
+    renderGroups();
+    go('groups');
+  } else {
+    renderDetail();
+    go('detail');
+  }
+}
+
+function renderGroups(){
+  const eq = S.equipments[S.currentEq];
+  if(!eq) return;
+  const total = eq.parts.length;
+  const done  = eq.parts.filter(p=>p.hasPhoto).length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+
+  document.getElementById('groups-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total fotos</div></div>
+    <div class="stat-card"><div class="stat-val">${done}/${total}</div><div class="stat-lbl">Fotografadas</div></div>`;
+  document.getElementById('groups-gp-pct').textContent = pct+'%';
+  document.getElementById('groups-gp-fill').style.width = pct+'%';
+
+  // Agrupa partes por grupo
+  const groupMap = {};
+  eq.parts.forEach(part => {
+    const g = part.group || '__sem_grupo__';
+    if(!groupMap[g]) groupMap[g] = [];
+    groupMap[g].push(part);
+  });
+
+  document.getElementById('groups-list').innerHTML = Object.entries(groupMap).map(([gName, items])=>{
+    const gDone  = items.filter(p=>p.hasPhoto).length;
+    const gTotal = items.length;
+    const gPct   = gTotal ? Math.round(gDone/gTotal*100) : 0;
+    const displayName = gName === '__sem_grupo__' ? 'SEM GRUPO' : gName;
+    return `<div class="eq-card" onclick="openGroup('${gName}')">
+      <div class="eq-ico" style="font-size:16px;background:rgba(var(--accent-rgb,30,64,175),0.12)">📁</div>
+      <div class="eq-info">
+        <div class="eq-name">${displayName}</div>
+        <div class="eq-meta">${gTotal} fotos · ${gDone} tiradas · ${gPct}%</div>
+        <div class="eq-pbar"><div class="eq-pfill" style="width:${gPct}%"></div></div>
+      </div>
+      <span style="color:var(--text3);font-size:18px">›</span>
+    </div>`;
+  }).join('');
+}
+
+function openGroup(groupName){
+  S.currentGroup = groupName;
   renderDetail();
   go('detail');
 }
@@ -633,8 +737,14 @@ function openEq(idx){
 async function renderDetail(){
   const eq = S.equipments[S.currentEq];
   if(!eq) return;
-  const total = eq.parts.length;
-  const done  = eq.parts.filter(p=>p.hasPhoto).length;
+
+  // Filtra partes pelo grupo atual se estiver num grupo
+  const parts = S.currentGroup
+    ? eq.parts.map((p,i)=>({...p,_pi:i})).filter(p=>p.group===S.currentGroup)
+    : eq.parts.map((p,i)=>({...p,_pi:i}));
+
+  const total = parts.length;
+  const done  = parts.filter(p=>p.hasPhoto).length;
   const pct   = total ? Math.round(done/total*100) : 0;
 
   document.getElementById('dstats').innerHTML=`
@@ -643,29 +753,8 @@ async function renderDetail(){
   document.getElementById('gp-pct').textContent = pct+'%';
   document.getElementById('gp-fill').style.width = pct+'%';
 
-  // Renderiza estrutura sem carregar fotos ainda (lazy)
-  document.getElementById('parts-list').innerHTML = eq.parts.map((part,pi)=>{
-    const note = part.note;
-    return `<div class="part-sec">
-      <div class="part-hdr">
-        <div class="part-title">${part.name}</div>
-        <div class="part-badge ${part.hasPhoto?'badge-ok':'badge-no'}">${part.hasPhoto?'✓ OK':'Pendente'}</div>
-      </div>
-      <div class="part-body">
-        <div class="thumb-wrap" id="thumb-${pi}" data-pi="${pi}" data-has="${part.hasPhoto?'1':'0'}">
-          <div class="ph-empty" style="font-size:13px;color:var(--text3)">${part.hasPhoto?'Carregando...':'sem foto'}</div>
-        </div>
-        <div class="fname">${part.name}.jpg</div>
-        ${note ? `<div class="fnote">${note}</div>` : ''}
-        <div class="p-actions">
-          <button class="btn" onclick="startCapture(${pi})">${part.hasPhoto?'↺ Refazer':'+ Tirar foto'}</button>
-          ${part.hasPhoto?`<button class="btn btn-danger" onclick="deletePhoto(${pi})">× Apagar</button>`:''}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  document.getElementById('parts-list').innerHTML = parts.map(part => partCard(part, part._pi)).join('');
 
-  // IntersectionObserver: carrega foto só quando a miniatura entra na tela
   const observer = new IntersectionObserver(async (entries) => {
     for(const entry of entries){
       if(!entry.isIntersecting) continue;
@@ -673,7 +762,6 @@ async function renderDetail(){
       const pi   = parseInt(wrap.dataset.pi);
       const has  = wrap.dataset.has === '1';
       if(!has){ observer.unobserve(wrap); continue; }
-      // Já tem imagem carregada? Para.
       if(wrap.querySelector('img')){ observer.unobserve(wrap); continue; }
       try {
         const dataUrl = await dbGet('photos', photoKey(eq.id, pi));
@@ -689,8 +777,27 @@ async function renderDetail(){
     }
   }, { root: document.getElementById('screen-detail'), rootMargin: '100px', threshold: 0.1 });
 
-  // Observa só as partes que têm foto
   document.querySelectorAll('.thumb-wrap[data-has="1"]').forEach(el => observer.observe(el));
+}
+
+function partCard(part, pi){
+  return `<div class="part-sec">
+    <div class="part-hdr">
+      <div class="part-title">${part.name}</div>
+      <div class="part-badge ${part.hasPhoto?'badge-ok':'badge-no'}">${part.hasPhoto?'✓ OK':'Pendente'}</div>
+    </div>
+    <div class="part-body">
+      <div class="thumb-wrap" id="thumb-${pi}" data-pi="${pi}" data-has="${part.hasPhoto?'1':'0'}">
+        <div class="ph-empty" style="font-size:13px;color:var(--text3)">${part.hasPhoto?'Carregando...':'sem foto'}</div>
+      </div>
+      <div class="fname">${part.name}.jpg</div>
+      ${part.note ? `<div class="fnote">${part.note}</div>` : ''}
+      <div class="p-actions">
+        <button class="btn" onclick="startCapture(${pi})">${part.hasPhoto?'↺ Refazer':'+ Tirar foto'}</button>
+        ${part.hasPhoto?`<button class="btn btn-danger" onclick="deletePhoto(${pi})">× Apagar</button>`:''}
+      </div>
+    </div>
+  </div>`;
 }
 
 // ── CONFIRM MODAL (substitui confirm() nativo bloqueado pelo Chrome) ──────────
@@ -817,11 +924,13 @@ async function confirmExportZip(){
   const sub  = document.getElementById('zip-sub-inp').value.trim();
   if(!code){ toast('⚠ Digite o código do equipamento'); return; }
   if(!sub){  toast('⚠ Digite a subestação'); return; }
-  const filename = `${code} ${sub}`;
+  const eq = S.equipments[S.currentEq];
+  const sigla = getSigla(eq.name);
+  const filename = `${sigla} ${code} ${sub}`;
   closeZipModal();
   showLoading('Gerando ZIP...');
   try {
-    const result = await gerarZip(filename);
+    const result = await gerarZip(filename, code, sigla);
     hideLoading();
     const msg = result.countNC > 0
       ? `✓ ${filename}.zip · ${result.count} foto${result.count>1?'s':''} · ${result.countNC} não conformidade${result.countNC>1?'s':''}`
@@ -834,8 +943,19 @@ async function confirmExportZip(){
   }
 }
 
+function getSigla(eqName){
+  const n = eqName.toUpperCase();
+  if(n.includes('DISJUNTOR'))                           return 'DJ';
+  if(n.includes('CORRENTE'))                            return 'TC';
+  if(n.includes('POTÊNCIA') || n.includes('POTENCIA'))  return 'TP';
+  if(n.includes('PARA-RAIO') || n.includes('PARARAIO')) return 'PR';
+  if(n.includes('REGULADOR') || n === 'TR')             return 'TR';
+  if(n.includes('CHAVE'))                               return 'CS';
+  return 'EQ';
+}
+
 // Função isolada para evitar vazamento de estado do JSZip no Chrome/Brave
-async function gerarZip(code){
+async function gerarZip(filename, code, sigla){
   const eq  = S.equipments[S.currentEq];
   const zip = new JSZip();
   let folderNC  = null;
@@ -855,23 +975,36 @@ async function gerarZip(code){
     count++;
     const isOsc   = isDisjuntor && oscKeywords.some(k=>part.name.toUpperCase().includes(k));
     const isPolos = isDisjuntor && polosKeywords.some(k=>part.name.toUpperCase().includes(k));
+
     if(part.note){
-      if(!folderNC) folderNC = zip.folder('NÃO CONFORMIDADES');
-      folderNC.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
-      ncLines.push(`${part.name} - ${part.note}`);
+      // Duplica: vai para raiz/grupo E para pasta NC
+      const dest = part.group ? (zip.folder(part.group)) : zip;
+      if(isOsc)        folderOSC.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
+      else if(isPolos) folderPOL.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
+      else             dest.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
+      ncLines.push({name: part.name, data: dataUrl.split(',')[1], note: part.note});
       countNC++;
     } else if(isOsc){
       folderOSC.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
     } else if(isPolos){
       folderPOL.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
+    } else if(part.group){
+      // Parte com grupo → subfolder
+      zip.folder(part.group).file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
     } else {
       zip.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
     }
   }
 
+  // Cria pasta NC com nome final correto e adiciona fotos + txt
   if(ncLines.length > 0){
-    const header = `NÃO CONFORMIDADES — ${code}\n${'='.repeat(50)}\n\n`;
-    const body   = ncLines.map((l,i)=>`${i+1}. ${l}`).join('\n\n');
+    const ncFolderName = `${sigla},${code},${ncLines.length}`;
+    folderNC = zip.folder(ncFolderName);
+    ncLines.forEach(item => {
+      folderNC.file(`${item.name}.jpg`, item.data, {base64:true});
+    });
+    const header = `NÃO CONFORMIDADES — ${filename}\n${'='.repeat(50)}\n\n`;
+    const body   = ncLines.map((item,i)=>`${i+1}. ${item.name} - ${item.note}`).join('\n\n');
     folderNC.file('NÃO CONFORMIDADES.txt', header + body);
   }
 
@@ -880,7 +1013,7 @@ async function gerarZip(code){
   const blob = await zip.generateAsync({type:'blob'});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
-  a.href=url; a.download=`${code}.zip`;
+  a.href=url; a.download=`${filename}.zip`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

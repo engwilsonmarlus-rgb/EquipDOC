@@ -138,12 +138,17 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-logo">Equip<span>DOC</span></div>
     <button class="btn" id="btn-back" style="display:none" onclick="goBack()">← Voltar</button>
     <button class="btn btn-primary" id="btn-novo" onclick="openNewEq()">+ Novo</button>
-    <button class="btn" id="btn-dup" style="display:none" onclick="openDupModal()">⧉ Duplicar</button>
-    <button class="btn" id="btn-refresh" style="display:none" onclick="forceUpdate()">↺ Atualizar</button>
-    <button class="btn btn-danger" id="btn-reset" style="display:none" onclick="openResetModal()">Resetar</button>
     <button class="btn btn-icon" id="btn-theme" onclick="toggleTheme()" title="Alternar tema">◐</button>
+    <button class="btn btn-icon" id="btn-more" onclick="toggleMoreMenu()" title="Mais opções">⋯</button>
     <button class="btn" id="btn-edit" style="display:none" onclick="openEditEq()">✏ Editar</button>
     <button class="btn btn-danger" id="btn-del" style="display:none" onclick="deleteCurrentEq()">× Excluir</button>
+  </div>
+
+  <!-- MENU MAIS OPÇÕES -->
+  <div id="more-menu" style="display:none;position:fixed;top:60px;right:12px;z-index:200;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,0.3);min-width:160px;overflow:hidden">
+    <button class="btn" style="width:100%;justify-content:flex-start;border:none;border-radius:0;border-bottom:1px solid var(--border)" onclick="openDupModal();closeMoreMenu()">⧉ Duplicar</button>
+    <button class="btn" style="width:100%;justify-content:flex-start;border:none;border-radius:0;border-bottom:1px solid var(--border)" onclick="forceUpdate();closeMoreMenu()">↺ Atualizar</button>
+    <button class="btn btn-danger" style="width:100%;justify-content:flex-start;border:none;border-radius:0" onclick="openResetModal();closeMoreMenu()">Resetar</button>
   </div>
 
   <!-- HOME -->
@@ -156,7 +161,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v23</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v24</div>
     </div>
   </div>
 
@@ -492,15 +497,26 @@ function updHeader(){
   const isHome   = S.screen==='home';
   const isDetail = S.screen==='detail';
   const isGroups = S.screen==='groups';
-  document.getElementById('btn-back').style.display    = isHome  ? 'none'        : 'inline-flex';
-  document.getElementById('btn-novo').style.display    = isHome  ? 'inline-flex' : 'none';
-  document.getElementById('btn-dup').style.display     = isHome  ? 'inline-flex' : 'none';
-  document.getElementById('btn-refresh').style.display = isHome  ? 'inline-flex' : 'none';
-  document.getElementById('btn-reset').style.display   = isHome  ? 'inline-flex' : 'none';
-  document.getElementById('btn-edit').style.display    = isDetail && !S.currentGroup ? 'inline-flex' : 'none';
-  document.getElementById('btn-del').style.display     = (isDetail && !S.currentGroup) || isGroups ? 'inline-flex' : 'none';
-  document.getElementById('btn-theme').style.display   = 'inline-flex';
+  document.getElementById('btn-back').style.display  = isHome  ? 'none'        : 'inline-flex';
+  document.getElementById('btn-novo').style.display  = isHome  ? 'inline-flex' : 'none';
+  document.getElementById('btn-more').style.display  = isHome  ? 'inline-flex' : 'none';
+  document.getElementById('btn-theme').style.display = 'inline-flex';
+  document.getElementById('btn-edit').style.display  = isDetail && !S.currentGroup ? 'inline-flex' : 'none';
+  document.getElementById('btn-del').style.display   = (isDetail && !S.currentGroup) || isGroups ? 'inline-flex' : 'none';
+  closeMoreMenu();
 }
+
+function toggleMoreMenu(){
+  const m = document.getElementById('more-menu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+function closeMoreMenu(){
+  document.getElementById('more-menu').style.display = 'none';
+}
+// Fecha menu ao clicar fora
+document.addEventListener('click', e => {
+  if(!e.target.closest('#more-menu') && !e.target.closest('#btn-more')) closeMoreMenu();
+});
 
 function goBack(){
   if(S.screen==='new-eq')    go('home');

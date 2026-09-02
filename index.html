@@ -161,7 +161,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v25</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v26</div>
     </div>
   </div>
 
@@ -326,6 +326,7 @@ const DEFAULT_EQUIPMENTS = [
   { name: 'PARA-RAIO', parts: ['AT A','AT B','AT C','FASE A','FASE B','FASE C','FICHA','MI A','MI B','MI C','PANO','PLACA A','PLACA B','PLACA C','PLACA COD'] },
   { name: 'TRANSFORMADOR POTENCIAL', parts: ['AT A','AT B','AT C','FICHA','MI A','MI B','MI C','NO A','NO B','NO C','PANO','PLACA A','PLACA B','PLACA C','PLACA COD','PNL AB','PNL AT','PNL ED','PNL VD','PNL','SEC A','SEC B','SEC C','SUSPIRO 1','SUSPIRO 2'] },
   { name: 'CHAVE TRIPOLAR', parts: ['PANO AB','PANO FE','PLACA','PLACA COD','PNL AT','PNL','MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','AT A','AT B','AT C','FICHA'] },
+  { name: 'CHECKLIST DO CARRO', parts: ['FRENTE','TRASEIRA','LADO ESQUERDO','LADO DIREITO','PAINEL LIGADO'] },
   { name: 'REGULADOR', groups: [
     { name: 'BUCHAS', parts: ['MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','NO L1','NO L2','NO L3','NO S1','NO S2','NO S3','PANO L','PANO S','PLACA L1','PLACA L2','PLACA L3','PLACA S1','PLACA S2','PLACA S3'] },
     { name: 'CAIXAS DE PASSAGEM DOS TC DE BUCHA', parts: ['CP L1 AB','CP L1 PLACA','CP L1','CP L2 AB','CP L2 PLACA','CP L2','CP L3 AB','CP L3 PLACA','CP L3','CP S1 AB','CP S1 PLACA','CP S1','CP S2 AB','CP S2 PLACA','CP S2','CP S3 AB','CP S3 PLACA','CP S3','CP SOLO AB','CP SOLO PLACA','CP SOLO'] },
@@ -422,7 +423,7 @@ async function persistEquipments(){
 }
 
 // versão da lista padrão — incremente sempre que mudar DEFAULT_EQUIPMENTS
-const DEFAULTS_VERSION = 12;
+const DEFAULTS_VERSION = 13;
 
 // Converte definição padrão em objeto de equipamento
 function defToEq(d){
@@ -972,7 +973,7 @@ function getSigla(eqName){
   if(n.includes('POTENCIAL') || n.includes('POTÊNCIA') || n.includes('POTENCIA'))  return 'TP';
   if(n.includes('PARA-RAIO') || n.includes('PARARAIO')) return 'PR';
   if(n.includes('REGULADOR') || n === 'TR')             return 'TR';
-  if(n.includes('CHAVE'))                               return 'CS';
+  if(n.includes('CARRO'))                               return 'CAR';
   return 'EQ';
 }
 

@@ -161,7 +161,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v26</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v30.5</div>
     </div>
   </div>
 
@@ -201,6 +201,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
   <!-- DETALHE -->
   <div class="screen" id="screen-detail">
     <div style="padding:20px">
+      <div id="detail-eq-label" style="font-size:13px;font-weight:600;color:var(--accent);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;opacity:0.85"></div>
       <div class="dstats" id="dstats"></div>
       <div class="gp">
         <div class="gp-lbl"><span>Progresso</span><span id="gp-pct">0%</span></div>
@@ -295,9 +296,9 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
   <div class="modal-box">
     <div class="modal-title">↓ Exportar ZIP</div>
     <div class="modal-sub">Preencha os campos para nomear o arquivo ZIP.</div>
-    <label class="flbl">Código do equipamento</label>
+    <label class="flbl" id="zip-code-lbl">Código do equipamento</label>
     <input class="finp" type="text" id="zip-code-inp" placeholder="Ex: 39T1" style="margin-bottom:12px">
-    <label class="flbl">Subestação</label>
+    <label class="flbl" id="zip-sub-lbl">Subestação</label>
     <input class="finp" type="text" id="zip-sub-inp" placeholder="Ex: SE TERESINA">
     <div class="modal-btns">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeZipModal()">Cancelar</button>
@@ -327,6 +328,26 @@ const DEFAULT_EQUIPMENTS = [
   { name: 'TRANSFORMADOR POTENCIAL', parts: ['AT A','AT B','AT C','FICHA','MI A','MI B','MI C','NO A','NO B','NO C','PANO','PLACA A','PLACA B','PLACA C','PLACA COD','PNL AB','PNL AT','PNL ED','PNL VD','PNL','SEC A','SEC B','SEC C','SUSPIRO 1','SUSPIRO 2'] },
   { name: 'CHAVE TRIPOLAR', parts: ['PANO AB','PANO FE','PLACA','PLACA COD','PNL AT','PNL','MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','AT A','AT B','AT C','FICHA'] },
   { name: 'CHECKLIST DO CARRO', parts: ['FRENTE','TRASEIRA','LADO ESQUERDO','LADO DIREITO','PAINEL LIGADO'] },
+  { name: 'BANCO CAPACITOR', groups: [
+    { name: 'CELULAS', parts: [
+      'MEDIÇÃO A1','MEDIÇÃO A2','MEDIÇÃO A3','MEDIÇÃO A4',
+      'PANO CEL A1','PANO CEL A2','PANO CEL A3','PANO CEL A4','PANO FASE A',
+      'PLACA A1','PLACA A2','PLACA A3','PLACA A4',
+      'MEDIÇÃO B1','MEDIÇÃO B2','MEDIÇÃO B3','MEDIÇÃO B4',
+      'PANO CEL B1','PANO CEL B2','PANO CEL B3','PANO CEL B4','PANO FASE B',
+      'PLACA B1','PLACA B2','PLACA B3','PLACA B4',
+      'MEDIÇÃO C1','MEDIÇÃO C2','MEDIÇÃO C3','MEDIÇÃO C4',
+      'PANO CEL C1','PANO CEL C2','PANO CEL C3','PANO CEL C4','PANO FASE C',
+      'PLACA C1','PLACA C2','PLACA C3','PLACA C4'
+    ]},
+    { name: 'CHAVE TERRA', parts: ['PLACA SEC','MI-N','MI-A','MI-B','MI-C','PANO','PLACA COD','TRAVA OP','PNL AB','PLACA OP'] },
+    { name: 'CHAVE VACUO', parts: ['MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','AT','PLACA COD','PLACA','PANO'] },
+    { name: 'PAINEL', parts: ['PANO','PLACA COD','AT','PNL AB1','PNL AB2','CABLAGEM 1','CABLAGEM 2','PNL VD','PNL ED','PLACA'] },
+    { name: 'PANO', parts: ['PANO 1','PANO 2','PANO 3','PANO 4','AT'] },
+    { name: 'PR', parts: ['AT A','AT B','AT C','MI A','MI B','MI C','PANO','PLACA A','PLACA B','PLACA C'] },
+    { name: 'REATOR', parts: ['MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','PANO','PLACA A','PLACA B','PLACA C'] },
+    { name: 'TC', parts: ['SEC','PLACA','AT','MI','PLACA COD'] }
+  ]},
   { name: 'REGULADOR', groups: [
     { name: 'BUCHAS', parts: ['MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','NO L1','NO L2','NO L3','NO S1','NO S2','NO S3','PANO L','PANO S','PLACA L1','PLACA L2','PLACA L3','PLACA S1','PLACA S2','PLACA S3'] },
     { name: 'CAIXAS DE PASSAGEM DOS TC DE BUCHA', parts: ['CP L1 AB','CP L1 PLACA','CP L1','CP L2 AB','CP L2 PLACA','CP L2','CP L3 AB','CP L3 PLACA','CP L3','CP S1 AB','CP S1 PLACA','CP S1','CP S2 AB','CP S2 PLACA','CP S2','CP S3 AB','CP S3 PLACA','CP S3','CP SOLO AB','CP SOLO PLACA','CP SOLO'] },
@@ -423,7 +444,7 @@ async function persistEquipments(){
 }
 
 // versão da lista padrão — incremente sempre que mudar DEFAULT_EQUIPMENTS
-const DEFAULTS_VERSION = 13;
+const DEFAULTS_VERSION = 14;
 
 // Converte definição padrão em objeto de equipamento
 function defToEq(d){
@@ -502,7 +523,7 @@ function updHeader(){
   document.getElementById('btn-novo').style.display  = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-more').style.display  = isHome  ? 'inline-flex' : 'none';
   document.getElementById('btn-theme').style.display = 'inline-flex';
-  document.getElementById('btn-edit').style.display  = isDetail && !S.currentGroup ? 'inline-flex' : 'none';
+  document.getElementById('btn-edit').style.display  = isDetail ? 'inline-flex' : 'none';
   document.getElementById('btn-del').style.display   = (isDetail && !S.currentGroup) || isGroups ? 'inline-flex' : 'none';
   closeMoreMenu();
 }
@@ -647,19 +668,38 @@ function openEditEq(){
   document.getElementById('edit-name-inp').value = eq.name;
   const c = document.getElementById('edit-parts-cont');
   c.innerHTML='';
-  eq.parts.forEach((p,pi)=> addEditPartRow(p.name, pi, p.hasPhoto));
+
+  if(S.currentGroup){
+    // Edição dentro de um grupo — mostra só partes desse grupo
+    eq.parts.forEach((p,pi)=>{
+      if((p.group||'') === S.currentGroup){
+        addEditPartRow(p.name, pi, p.hasPhoto, p.group||'');
+      }
+    });
+    // Aviso do grupo atual
+    const hint = document.createElement('p');
+    hint.className = 'hint';
+    hint.textContent = `Editando partes do grupo: ${S.currentGroup}`;
+    hint.style.color = 'var(--accent)';
+    c.insertBefore(hint, c.firstChild);
+  } else {
+    // Edição geral — mostra todas as partes
+    eq.parts.forEach((p,pi)=> addEditPartRow(p.name, pi, p.hasPhoto, p.group||''));
+  }
   go('edit-eq');
 }
 
-function addEditPartRow(name='', origIdx=null, hasPhoto=false){
+function addEditPartRow(name='', origIdx=null, hasPhoto=false, group=''){
   const c = document.getElementById('edit-parts-cont');
   const d = document.createElement('div');
   d.className='edit-part-row';
   d.dataset.orig = origIdx !== null ? String(origIdx) : '';
+  d.dataset.group = group;
   const tag = origIdx !== null
-    ? (hasPhoto ? `<span class="ptag ptag-ok">✓ foto tirada</span>` : `<span class="ptag ptag-no">sem foto</span>`)
-    : `<span class="ptag ptag-no">nova parte</span>`;
+    ? (hasPhoto ? `<span class="ptag ptag-ok">✓ foto</span>` : `<span class="ptag ptag-no">sem foto</span>`)
+    : `<span class="ptag ptag-no">nova</span>`;
   d.innerHTML=`<div class="edit-part-wrap">
+      ${!S.currentGroup ? `<input class="finp" type="text" placeholder="Grupo (opcional)" value="${group}" style="margin:0;margin-bottom:4px;font-size:12px;color:var(--text2)" oninput="this.parentElement.parentElement.dataset.group=this.value">` : ''}
       <input class="finp" type="text" placeholder="Nome da parte" value="${name}" style="margin:0">
       ${tag}
     </div>
@@ -675,21 +715,39 @@ async function saveEditEquipment(){
   const eq = S.equipments[S.currentEq];
   const newParts=[]; let ok=true;
   rows.forEach(r=>{
-    const pname = r.querySelector('input').value.trim();
+    const inputs = r.querySelectorAll('input');
+    const grp   = S.currentGroup || inputs[0].value.trim();
+    const pname = inputs[S.currentGroup ? 1 : 1].value.trim();
     if(!pname){ ok=false; return; }
     const oi = r.dataset.orig !== '' ? parseInt(r.dataset.orig) : null;
     if(oi !== null && eq.parts[oi]){
-      newParts.push({...eq.parts[oi], name:pname});
+      newParts.push({...eq.parts[oi], name:pname, group:grp});
     } else {
-      newParts.push({name:pname, note:'', hasPhoto:false});
+      newParts.push({name:pname, group:grp, note:'', hasPhoto:false});
     }
   });
   if(!ok){ toast('⚠ Preencha todos os nomes'); return; }
   eq.name = name;
-  eq.parts = newParts;
+
+  if(S.currentGroup){
+    // Edição de grupo: substitui só as partes desse grupo, mantém as outras
+    const outrasPartes = eq.parts.filter(p=>(p.group||'') !== S.currentGroup);
+    eq.parts = [...outrasPartes, ...newParts];
+  } else {
+    eq.parts = newParts;
+  }
+
   await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,group:p.group||'',note:p.note,hasPhoto:p.hasPhoto}))});
   toast('✓ Alterações salvas');
-  renderHome(); renderDetail(); go('detail');
+  renderHome();
+  if(S.currentGroup){
+    renderDetail();
+    go('detail');
+  } else {
+    const hasGroups = eq.parts.some(p=>p.group);
+    if(hasGroups){ renderGroups(); go('groups'); }
+    else { renderDetail(); go('detail'); }
+  }
 }
 
 // ── DETALHE ───────────────────────────────────────────────────────────────────
@@ -764,6 +822,8 @@ async function renderDetail(){
   const done  = parts.filter(p=>p.hasPhoto).length;
   const pct   = total ? Math.round(done/total*100) : 0;
 
+  const label = S.currentGroup ? `${eq.name} › ${S.currentGroup}` : eq.name;
+  document.getElementById('detail-eq-label').textContent = label;
   document.getElementById('dstats').innerHTML=`
     <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Partes</div></div>
     <div class="stat-card"><div class="stat-val">${done}/${total}</div><div class="stat-lbl">Fotografadas</div></div>`;
@@ -937,6 +997,11 @@ function openZipModal(){
   if(!eq.parts.some(p=>p.hasPhoto)){ toast('⚠ Nenhuma foto para exportar'); return; }
   document.getElementById('zip-code-inp').value='';
   document.getElementById('zip-sub-inp').value='';
+  const isCarro = eq.name.toUpperCase().includes('CARRO');
+  document.getElementById('zip-code-lbl').textContent = isCarro ? 'Placa do veículo' : 'Código do equipamento';
+  document.getElementById('zip-code-inp').placeholder  = isCarro ? 'Ex: ABC-1234' : 'Ex: 39T1';
+  document.getElementById('zip-sub-lbl').textContent  = isCarro ? 'Cidade' : 'Subestação';
+  document.getElementById('zip-sub-inp').placeholder   = isCarro ? 'Ex: TERESINA' : 'Ex: SE TERESINA';
   document.getElementById('modal-zip').classList.add('open');
   setTimeout(()=>document.getElementById('zip-code-inp').focus(),100);
 }
@@ -968,12 +1033,14 @@ async function confirmExportZip(){
 
 function getSigla(eqName){
   const n = eqName.toUpperCase();
-  if(n.includes('DISJUNTOR'))                           return 'DJ';
-  if(n.includes('CORRENTE'))                            return 'TC';
-  if(n.includes('POTENCIAL') || n.includes('POTÊNCIA') || n.includes('POTENCIA'))  return 'TP';
-  if(n.includes('PARA-RAIO') || n.includes('PARARAIO')) return 'PR';
-  if(n.includes('REGULADOR') || n === 'TR')             return 'TR';
-  if(n.includes('CARRO'))                               return 'CAR';
+  if(n.includes('DISJUNTOR'))                                                    return 'DJ';
+  if(n.includes('CORRENTE'))                                                     return 'TC';
+  if(n.includes('POTENCIAL') || n.includes('POTÊNCIA') || n.includes('POTENCIA')) return 'TP';
+  if(n.includes('PARA-RAIO') || n.includes('PARARAIO'))                          return 'PR';
+  if(n.includes('REGULADOR') || n === 'TR')                                      return 'TR';
+  if(n.includes('BANCO CAPACITOR') || n.includes('BANCO CAP'))                   return 'BC';
+  if(n.includes('CHAVE'))                                                        return 'CS';
+  if(n.includes('CARRO'))                                                        return 'CAR';
   return 'EQ';
 }
 
@@ -983,12 +1050,14 @@ async function gerarZip(filename, code, sigla){
   const zip = new JSZip();
   let folderNC  = null;
   const isDisjuntor  = eq.name.toUpperCase().includes('DISJUNTOR');
+  const isBc         = sigla === 'BC';
   const folderOSC    = isDisjuntor ? zip.folder('OSCILOGRAFIA') : null;
   const folderPOL    = isDisjuntor ? zip.folder('POLOS') : null;
   const oscKeywords  = ['ABERTURA', 'FECHAMENTO'];
   const polosKeywords= ['FASE A', 'FASE B', 'FASE C'];
   let count = 0, countNC = 0;
   const ncLines = [];
+  const bcRootCopies = {}; // cópias para a raiz do BC
 
   for(let i=0;i<eq.parts.length;i++){
     const part = eq.parts[i];
@@ -998,36 +1067,74 @@ async function gerarZip(filename, code, sigla){
     count++;
     const isOsc   = isDisjuntor && oscKeywords.some(k=>part.name.toUpperCase().includes(k));
     const isPolos = isDisjuntor && polosKeywords.some(k=>part.name.toUpperCase().includes(k));
+    const b64 = dataUrl.split(',')[1];
 
     if(part.note){
-      // Duplica: vai para raiz/grupo E para pasta NC
-      const dest = part.group ? (zip.folder(part.group)) : zip;
-      if(isOsc)        folderOSC.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
-      else if(isPolos) folderPOL.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
-      else             dest.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
-      ncLines.push({name: part.name, data: dataUrl.split(',')[1], note: part.note});
+      const dest = part.group ? (isBc && part.group==='CELULAS' ? (() => {
+        const letter = (part.name.match(/\s([ABC])\d*$/) || part.name.match(/FASE\s([ABC])$/))||[];
+        return letter[1] ? zip.folder('CELULAS').folder(letter[1]) : zip.folder('CELULAS');
+      })() : zip.folder(part.group)) : zip;
+      if(isOsc)        folderOSC.file(`${part.name}.jpg`, b64, {base64:true});
+      else if(isPolos) folderPOL.file(`${part.name}.jpg`, b64, {base64:true});
+      else             dest.file(`${part.name}.jpg`, b64, {base64:true});
+      ncLines.push({name: part.name, data: b64, note: part.note, group: part.group||''});
       countNC++;
     } else if(isOsc){
-      folderOSC.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
+      folderOSC.file(`${part.name}.jpg`, b64, {base64:true});
     } else if(isPolos){
-      folderPOL.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
+      folderPOL.file(`${part.name}.jpg`, b64, {base64:true});
+    } else if(isBc && part.group === 'CELULAS'){
+      const letter = (part.name.match(/\s([ABC])\d*$/) || part.name.match(/FASE\s([ABC])$/))||[];
+      if(letter[1]){
+        zip.folder('CELULAS').folder(letter[1]).file(`${part.name}.jpg`, b64, {base64:true});
+      } else {
+        zip.folder('CELULAS').file(`${part.name}.jpg`, b64, {base64:true});
+      }
     } else if(part.group){
-      // Parte com grupo → subfolder
-      zip.folder(part.group).file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
+      zip.folder(part.group).file(`${part.name}.jpg`, b64, {base64:true});
     } else {
-      zip.file(`${part.name}.jpg`, dataUrl.split(',')[1], {base64:true});
+      zip.file(`${part.name}.jpg`, b64, {base64:true});
+    }
+
+    // BC: coleta cópias para a raiz
+    if(isBc){
+      if(part.name === 'PLACA COD' && part.group && part.group !== 'PAINEL'){
+        bcRootCopies[`${part.group} PLACA COD.jpg`] = b64;
+      }
+      if(part.group === 'PAINEL' && ['AT','PLACA COD','PLACA'].includes(part.name)){
+        bcRootCopies[`${part.name}.jpg`] = b64;
+      }
+      if(part.group === 'PANO' && part.name === 'PANO 1'){
+        bcRootCopies['PANO.jpg'] = b64;
+      }
     }
   }
+
+  // Adiciona cópias na raiz para BC
+  Object.entries(bcRootCopies).forEach(([fname, b64]) => {
+    zip.file(fname, b64, {base64:true});
+  });
 
   // Cria pasta NC com nome final correto e adiciona fotos + txt
   if(ncLines.length > 0){
     const ncFolderName = `${sigla},${code},${ncLines.length}`;
+    const hasGroups = ncLines.some(item => item.group);
     folderNC = zip.folder(ncFolderName);
-    ncLines.forEach(item => {
-      folderNC.file(`${item.name}.jpg`, item.data, {base64:true});
+    ncLines.forEach((item, i) => {
+      const obs = item.note.toUpperCase();
+      // Foto renomeada de forma simples: número, obs,__
+      const fname = `${i+1}, ${obs},__.jpg`;
+      folderNC.file(fname, item.data, {base64:true});
     });
     const header = `NÃO CONFORMIDADES — ${filename}\n${'='.repeat(50)}\n\n`;
-    const body   = ncLines.map((item,i)=>`${i+1}. ${item.name} - ${item.note}`).join('\n\n');
+    const body = ncLines.map((item, i) => {
+      const obs = item.note.toUpperCase();
+      if(hasGroups && item.group){
+        return `${item.group} - ${item.name} - ${i+1}, ${obs},__`;
+      } else {
+        return `${item.name} - ${i+1}, ${obs},__`;
+      }
+    }).join('\n');
     folderNC.file('NÃO CONFORMIDADES.txt', header + body);
   }
 

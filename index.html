@@ -160,7 +160,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v31.2</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v3.1</div>
     </div>
   </div>
 
@@ -322,7 +322,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
 const DEFAULT_EQUIPMENTS = [
   { name: 'CHAVE MONO/TANDEM/FUSÍVEL', parts: ['PLACA A','PLACA B','PLACA C','PANO','PLACA COD','AT A','AT B','AT C','MI A1','MI A2','MI A3','MI B1','MI B2','MI B3','MI C1','MI C2','MI C3','FICHA'] },
   { name: 'DISJUNTOR', parts: ['AT','CABLAGEM 1','CABLAGEM 2','DIAGRAMA','FICHA','MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','MN','CH','PANO','PLACA COD','PLACA','PNL AB','PNL ED','PNL VD','FASE A(A)','FASE A','FASE B(A)','FASE B','FASE C(A)','FASE C','FECHAMENTO 1','FECHAMENTO 2','ABERTURA 1','ABERTURA 2'] },
-  { name: 'TRANSFORMADOR DE CORRENTE', parts: ['AT','AT A','AT B','AT C','FICHA','MI A','MI A2','MI B','MI B2','MI C','MI C2','PANO','PLACA','PLACA A','PLACA B','PLACA C','NO A','NO B','NO C','PLACA COD','PNL AB','PNL AT','PNL ED','PNL VD','PNL','SEC A','SEC B','SEC C','SUSPIRO 1','SUSPIRO 2'] },
+  { name: 'TRANSFORMADOR DE CORRENTE', parts: ['AT','AT A','AT B','AT C','FICHA','MI A','MI A2','MI B','MI B2','MI C','MI C2','PANO','PLACA','PLACA A','PLACA B','PLACA C','NO A','NO B','NO C','PLACA COD','PLACA DE RELAÇÃO','PNL AB','PNL AT','PNL ED','PNL VD','PNL','SEC A','SEC B','SEC C','SUSPIRO 1','SUSPIRO 2'] },
   { name: 'PARA-RAIO', parts: ['AT A','AT B','AT C','FASE A','FASE B','FASE C','FICHA','MI A','MI B','MI C','PANO','PLACA A','PLACA B','PLACA C','PLACA COD'] },
   { name: 'TRANSFORMADOR POTENCIAL', parts: ['AT A','AT B','AT C','FICHA','MI A','MI B','MI C','NO A','NO B','NO C','PANO','PLACA A','PLACA B','PLACA C','PLACA COD','PNL AB','PNL AT','PNL ED','PNL VD','PNL','SEC A','SEC B','SEC C','SUSPIRO 1','SUSPIRO 2'] },
   { name: 'CHAVE TRIPOLAR', parts: ['PANO AB','PANO FE','PLACA','PLACA COD','PNL AT','PNL','MI A1','MI A2','MI B1','MI B2','MI C1','MI C2','AT A','AT B','AT C','FICHA'] },
@@ -443,7 +443,7 @@ async function persistEquipments(){
 }
 
 // versão da lista padrão — incremente sempre que mudar DEFAULT_EQUIPMENTS
-const DEFAULTS_VERSION = 15;
+const DEFAULTS_VERSION = 16;
 
 // Converte definição padrão em objeto de equipamento
 function defToEq(d){
@@ -1026,8 +1026,8 @@ function openZipModal(){
 function closeZipModal(){ document.getElementById('modal-zip').classList.remove('open'); }
 
 async function confirmExportZip(){
-  const code = document.getElementById('zip-code-inp').value.trim();
-  const sub  = document.getElementById('zip-sub-inp').value.trim();
+  const code = document.getElementById('zip-code-inp').value.trim().toUpperCase();
+  const sub  = document.getElementById('zip-sub-inp').value.trim().toUpperCase();
   if(!code){ toast('⚠ Digite o código do equipamento'); return; }
   if(!sub){  toast('⚠ Digite a subestação'); return; }
   const eq = S.equipments[S.currentEq];
@@ -1141,7 +1141,7 @@ async function gerarZip(filename, code, sigla){
     ncLines.forEach((item, i) => {
       const obs = item.note.toUpperCase();
       // Foto renomeada: número, obs + nome da parte,__
-      const fname = `${i+1}, ${obs} ${item.name},__.jpg`;
+      const fname = `${i+1}, ${obs} ${item.name.toUpperCase()},__.jpg`;
       folderNC.file(fname, item.data, {base64:true});
     });
     const header = `NÃO CONFORMIDADES — ${filename}\n${'='.repeat(50)}\n\n`;

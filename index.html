@@ -160,7 +160,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v3.1</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v4.1</div>
     </div>
   </div>
 
@@ -278,6 +278,13 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
   </div>
 </div>
 
+<!-- MODAL TELA CHEIA -->
+<div id="modal-fullscreen" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.95);z-index:400;flex-direction:column;align-items:center;justify-content:center" onclick="closeFullscreen()">
+  <div style="position:absolute;top:16px;right:16px;color:#fff;font-size:22px;cursor:pointer;z-index:401;background:rgba(0,0,0,0.5);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center">×</div>
+  <img id="fullscreen-img" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:4px">
+  <div id="fullscreen-info" style="position:absolute;bottom:20px;left:0;right:0;text-align:center;color:rgba(255,255,255,0.7);font-size:12px;font-family:var(--mono);padding:0 20px"></div>
+</div>
+
 <!-- MODAL CONFIRMAÇÃO -->
 <div class="modal-bg" id="modal-confirm">
   <div class="modal-box">
@@ -298,7 +305,9 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
     <label class="flbl" id="zip-code-lbl">Código do equipamento</label>
     <input class="finp" type="text" id="zip-code-inp" placeholder="Ex: 39T1" style="margin-bottom:12px">
     <label class="flbl" id="zip-sub-lbl">Subestação</label>
-    <input class="finp" type="text" id="zip-sub-inp" placeholder="Ex: SE TERESINA">
+    <input class="finp" type="text" id="zip-sub-inp" placeholder="Ex: SE TERESINA" style="margin-bottom:12px">
+    <label class="flbl">Data do ensaio</label>
+    <input class="finp" type="date" id="zip-date-inp">
     <div class="modal-btns">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeZipModal()">Cancelar</button>
       <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="confirmExportZip()">↓ Baixar</button>
@@ -889,13 +898,34 @@ function partCard(part, pi){
       ${part.note ? `<div class="fnote">${part.note}</div>` : ''}
       <div class="p-actions">
         <button class="btn" onclick="startCapture(${pi})">${part.hasPhoto?'↺ Refazer':'+ Tirar foto'}</button>
+        ${part.hasPhoto?`<button class="btn" onclick="openFullscreen(${pi})">🔍 Ver foto</button>`:''}
         ${part.hasPhoto?`<button class="btn btn-danger" onclick="deletePhoto(${pi})">× Apagar</button>`:''}
       </div>
     </div>
   </div>`;
 }
 
-// ── CONFIRM MODAL (substitui confirm() nativo bloqueado pelo Chrome) ──────────
+// ── TELA CHEIA ────────────────────────────────────────────────────────────────
+async function openFullscreen(pi){
+  const eq   = S.equipments[S.currentEq];
+  const part = eq.parts[pi];
+  if(!part.hasPhoto) return;
+  try {
+    const dataUrl = await dbGet('photos', photoKey(eq.id, pi));
+    if(!dataUrl) return;
+    const modal = document.getElementById('modal-fullscreen');
+    document.getElementById('fullscreen-img').src = dataUrl;
+    document.getElementById('fullscreen-info').textContent =
+      `${part.name}`;
+    modal.style.display = 'flex';
+  } catch(e){}
+}
+function closeFullscreen(){
+  document.getElementById('modal-fullscreen').style.display = 'none';
+  document.getElementById('fullscreen-img').src = '';
+}
+
+// ── CONFIRM MODAL
 let _confirmResolve = null;
 function customConfirm(msg){
   return new Promise(res => {
@@ -994,6 +1024,7 @@ async function savePhotoInline(){
     const part = eq.parts[S.capturePart];
     part.note     = document.getElementById('mf-note').value.trim();
     part.hasPhoto = true;
+    
     await dbPut('photos', S.captureDataUrl, photoKey(eq.id, S.capturePart));
     await dbPut('equipments', {id:eq.id, name:eq.name, parts: eq.parts.map(p=>({name:p.name,group:p.group||'',note:p.note,hasPhoto:p.hasPhoto}))});
     // Guardar scroll antes de re-renderizar
@@ -1015,6 +1046,7 @@ function openZipModal(){
   if(!eq.parts.some(p=>p.hasPhoto)){ toast('⚠ Nenhuma foto para exportar'); return; }
   document.getElementById('zip-code-inp').value='';
   document.getElementById('zip-sub-inp').value='';
+  document.getElementById('zip-date-inp').value = new Date().toISOString().split('T')[0];
   const isCarro = eq.name.toUpperCase().includes('CARRO');
   document.getElementById('zip-code-lbl').textContent = isCarro ? 'Placa do veículo' : 'Código do equipamento';
   document.getElementById('zip-code-inp').placeholder  = isCarro ? 'Ex: ABC-1234' : 'Ex: 39T1';
@@ -1026,13 +1058,16 @@ function openZipModal(){
 function closeZipModal(){ document.getElementById('modal-zip').classList.remove('open'); }
 
 async function confirmExportZip(){
-  const code = document.getElementById('zip-code-inp').value.trim().toUpperCase();
-  const sub  = document.getElementById('zip-sub-inp').value.trim().toUpperCase();
+  const code    = document.getElementById('zip-code-inp').value.trim().toUpperCase();
+  const sub     = document.getElementById('zip-sub-inp').value.trim().toUpperCase();
+  const dateVal = document.getElementById('zip-date-inp').value;
   if(!code){ toast('⚠ Digite o código do equipamento'); return; }
   if(!sub){  toast('⚠ Digite a subestação'); return; }
+  // Converte DD/MM/AAAA para DD-MM-AAAA no nome do arquivo
+  const dateStr = dateVal ? dateVal.split('-').reverse().join('-') : '';
   const eq = S.equipments[S.currentEq];
   const sigla = getSigla(eq.name);
-  const filename = `${sigla} ${code} ${sub}`;
+  const filename = dateStr ? `${sigla} ${code} ${sub} ${dateStr}` : `${sigla} ${code} ${sub}`;
   closeZipModal();
   showLoading('Gerando ZIP...');
   try {

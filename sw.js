@@ -1,27 +1,13 @@
-const CACHE = 'equipdoc-v6';
+const CACHE = 'equipdoc-v8';
+const ASSETS = ['./index.html', './manifest.json'];
 
-const CORE = [
-  './index.html',
-  './manifest.json',
-  'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
-];
-
-// Instalação: cacheia tudo que conseguir
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(async c => {
-      for(const url of CORE){
-        try {
-          const res = await fetch(url);
-          if(res.ok) await c.put(url, res);
-        } catch(err){}
-      }
-    })
+    caches.open(CACHE).then(c => c.addAll(ASSETS))
   );
   self.skipWaiting();
 });
 
-// Ativação: remove caches antigos
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
@@ -31,27 +17,26 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// Fetch: CACHE FIRST — nunca vai à internet sozinho após cachear
 self.addEventListener('fetch', e => {
   if(e.request.method !== 'GET') return;
 
+  // Ignora requisições externas (CDN, fonts, etc)
+  const url = new URL(e.request.url);
+  if(url.origin !== self.location.origin) return;
+
   e.respondWith(
     caches.match(e.request).then(cached => {
-      // Tem no cache? Retorna imediatamente, sem tocar na internet
+      // Sempre serve do cache se tiver — nunca bloqueia ao voltar ao app
       if(cached) return cached;
 
-      // Não tem ainda: busca uma vez, salva no cache e retorna
       return fetch(e.request).then(response => {
-        if(!response || response.status !== 200 || response.type === 'opaqueredirect'){
+        if(!response || response.status !== 200 || response.type !== 'basic'){
           return response;
         }
         const clone = response.clone();
         caches.open(CACHE).then(c => c.put(e.request, clone));
         return response;
-      }).catch(() => {
-        if(e.request.mode === 'navigate') return caches.match('./index.html');
-        return new Response('Offline', { status: 503 });
-      });
+      }).catch(() => caches.match('./index.html'));
     })
   );
 });

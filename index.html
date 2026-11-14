@@ -138,10 +138,46 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
     <div class="hdr-logo">Equip<span>DOC</span></div>
     <button class="btn" id="btn-back" style="display:none" onclick="goBack()">← Voltar</button>
     <button class="btn btn-primary" id="btn-novo" onclick="openNewEq()">+ Novo</button>
+    <button class="btn btn-icon" id="btn-help" onclick="openHelpModal()" title="Legenda de siglas">?</button>
     <button class="btn btn-icon" id="btn-theme" onclick="toggleTheme()" title="Alternar tema">◐</button>
     <button class="btn btn-icon" id="btn-more" onclick="toggleMoreMenu()" title="Mais opções">⋯</button>
     <button class="btn" id="btn-edit" style="display:none" onclick="openEditEq()">✏ Editar</button>
     <button class="btn btn-danger" id="btn-del" style="display:none" onclick="deleteCurrentEq()">× Excluir</button>
+  </div>
+
+  <!-- MODAL LEGENDA -->
+  <div class="modal-bg" id="help-modal" onclick="if(event.target===this)closeHelpModal()">
+    <div class="modal-box" style="max-width:400px;max-height:80vh;overflow-y:auto">
+      <div class="modal-title">📖 Legenda de Siglas</div>
+      <div class="modal-sub">Referência rápida para nomenclatura das fotos.</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border2)">
+            <th style="text-align:left;padding:7px 6px;font-family:var(--mono);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.6px;width:38%">Sigla</th>
+            <th style="text-align:left;padding:7px 6px;font-family:var(--mono);font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:0.6px">Significado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">AT</td><td style="padding:7px 6px;color:var(--text)">Aterramento</td></tr>
+          <tr style="background:rgba(255,255,255,0.03)"><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">MI</td><td style="padding:7px 6px;color:var(--text)">Marcador Industrial</td></tr>
+          <tr><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">PANO</td><td style="padding:7px 6px;color:var(--text)">Panorâmica</td></tr>
+          <tr style="background:rgba(255,255,255,0.03)"><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">COD</td><td style="padding:7px 6px;color:var(--text)">Codificação (plaqueta)</td></tr>
+          <tr><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">PNL</td><td style="padding:7px 6px;color:var(--text)">Painel</td></tr>
+          <tr style="background:rgba(255,255,255,0.03)"><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">PNL AB</td><td style="padding:7px 6px;color:var(--text)">Painel Aberto</td></tr>
+          <tr><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">PNL AT</td><td style="padding:7px 6px;color:var(--text)">Aterramento do Painel</td></tr>
+          <tr style="background:rgba(255,255,255,0.03)"><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">PNL ED</td><td style="padding:7px 6px;color:var(--text)">Eletroduto do Painel</td></tr>
+          <tr><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">PNL VD</td><td style="padding:7px 6px;color:var(--text)">Vedação do Painel</td></tr>
+          <tr style="background:rgba(255,255,255,0.03)"><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">SEC</td><td style="padding:7px 6px;color:var(--text)">Secundário</td></tr>
+          <tr><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">NO</td><td style="padding:7px 6px;color:var(--text)">Nível de Óleo</td></tr>
+          <tr style="background:rgba(255,255,255,0.03)"><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">CH</td><td style="padding:7px 6px;color:var(--text)">Chave de Mola</td></tr>
+          <tr><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">MN</td><td style="padding:7px 6px;color:var(--text)">Manômetro</td></tr>
+          <tr style="background:rgba(255,255,255,0.03)"><td style="padding:7px 6px;font-family:var(--mono);color:var(--accent);font-weight:700">CP</td><td style="padding:7px 6px;color:var(--text)">Caixa de Passagem</td></tr>
+        </tbody>
+      </table>
+      <div class="modal-btns">
+        <button class="btn btn-primary btn-block" onclick="closeHelpModal()">Fechar</button>
+      </div>
+    </div>
   </div>
 
   <!-- MENU MAIS OPÇÕES -->
@@ -160,7 +196,7 @@ textarea.finp{resize:vertical;min-height:72px;line-height:1.5}
         <div class="empty-title">Nenhum equipamento</div>
         <div class="empty-sub">Toque em <strong>+ Novo</strong> para começar.</div>
       </div>
-      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v4.5</div>
+      <div style="text-align:center;margin-top:32px;font-family:var(--mono);font-size:11px;color:var(--text3)">EquipDOC · v4.6</div>
     </div>
   </div>
 
@@ -458,7 +494,7 @@ async function persistEquipments(){
 }
 
 // versão da lista padrão — incremente sempre que mudar DEFAULT_EQUIPMENTS
-const DEFAULTS_VERSION = 18;
+const DEFAULTS_VERSION = 19;
 
 // Converte definição padrão em objeto de equipamento
 function defToEq(d){
@@ -1098,6 +1134,9 @@ async function savePhotoInline(){
 }
 
 // ── ZIP ───────────────────────────────────────────────────────────────────────
+function openHelpModal(){ document.getElementById('help-modal').classList.add('open'); }
+function closeHelpModal(){ document.getElementById('help-modal').classList.remove('open'); }
+
 function openZipModal(){
   const eq = S.equipments[S.currentEq];
   if(!eq.parts.some(p=>p.hasPhoto)){ toast('⚠ Nenhuma foto para exportar'); return; }
